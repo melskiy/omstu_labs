@@ -64,10 +64,15 @@ data_analitics/
 docker compose up -d --build
 ```
 
-Сервисы будут доступны по адресам:
+Сервисы и веб-интерфейсы доступны по адресам:
 - 🌐 **Интерактивный дэшборд Streamlit**: [http://localhost:8501](http://localhost:8501)
-- 🐘 **PostgreSQL**: `localhost:5432` (пользователь `dwh_user`, пароль `dwh_password`, база `music_dwh`)
-- ⚡ **ClickHouse**: `http://localhost:8123` (пользователь `default`, пароль `ch_password`, база `music_analytics`)
+  * Страница **`3_db_viewer`**: встроенный веб-инспектор таблиц всех слоев PostgreSQL (`SOURCE`, `STAGING`, `ODS`, `DDS`, `MART`) и ClickHouse, с DDL-схемой, выгрузкой в CSV и SQL-консолью.
+- ⚡ **Официальный ClickHouse Web Client (Play)**: [http://localhost:8123/play](http://localhost:8123/play)
+  * Логин: `default`, пароль: `ch_password`, база: `music_analytics`.
+- 🐘 **Параметры прямого подключения к PostgreSQL** (через DBeaver, DataGrip, pgAdmin):
+  * Хост: `localhost`, Порт: `5432`, База: `music_dwh`, Пользователь: `dwh_user`, Пароль: `dwh_password`.
+- ⚡ **Параметры прямого подключения к ClickHouse**:
+  * Хост: `localhost`, HTTP порт: `8123`, Native порт: `9000`, База: `music_analytics`, Пользователь: `default`, Пароль: `ch_password`.
 
 ---
 
