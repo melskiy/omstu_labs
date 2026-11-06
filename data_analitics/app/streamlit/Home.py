@@ -104,6 +104,24 @@ st.divider()
 st.subheader("⚙️ Панель управления ETL-пайплайном")
 st.caption("Позволяет выполнить каждый шаг лабораторных работ или запустить сквозной процесс.")
 
+if st.button("🚀 ВЫПОЛНИТЬ СКВОЗНОЙ ETL (SOURCE → STAGING → ODS → DDS → MART → ClickHouse)", type="primary", use_container_width=True):
+    with st.spinner("Запуск сквозного пайплайна для всех партий данных..."):
+        try:
+            # 1. Перенос в staging
+            run_source_to_staging()
+            # 2. Инкремент в ods
+            run_staging_to_ods(date(2024, 1, 1), date(2024, 6, 30))
+            # 3. DDS снежинка
+            run_ods_to_dds(date(2024, 1, 1), date(2024, 6, 30))
+            # 4. Обновление витрины
+            run_refresh_mart(date(2024, 1, 1), date(2024, 6, 30))
+            # 5. Синхронизация с ClickHouse
+            transfer_mart_to_clickhouse()
+            st.success("🎉 Полный цикл успешно выполнен! Все слои DWH и витрина ClickHouse на 100% согласованы!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Ошибка выполнения сквозного пайплайна: {e}")
+
 ctrl_col1, ctrl_col2, ctrl_col3 = st.columns(3)
 
 with ctrl_col1:

@@ -342,13 +342,27 @@ else:
         df_verification = pd.DataFrame(verification_table)
         st.dataframe(df_verification, use_container_width=True, hide_index=True)
 
+        col_sync1, col_sync2 = st.columns([1, 3])
+        with col_sync1:
+            if st.button("🔄 Синхронизировать с ClickHouse", use_container_width=True):
+                with st.spinner("Перенос актуальных данных витрины в ClickHouse..."):
+                    try:
+                        from app.clickhouse_transfer import transfer_mart_to_clickhouse
+                    except ImportError:
+                        from clickhouse_transfer import transfer_mart_to_clickhouse
+                    transfer_mart_to_clickhouse()
+                    st.success("Витрина успешно синхронизирована!")
+                    st.rerun()
+
         if all_consistent and int(pg_res['total_rows']) > 0:
             st.success("🎉 **Все показатели аналитических витрин в PostgreSQL и ClickHouse полностью совпадают!** "
                        "Перенос данных выполнен корректно, целостность и точность вычислений сохранены.")
         elif int(pg_res['total_rows']) == 0:
             st.info("Витрины пока не содержат данных. Выполните шаги обновления и переноса.")
         else:
-            st.error("Обнаружены расхождения между витринами СУБД. Проверьте параметры повторной синхронизации.")
+            st.warning("⚠️ **Обнаружено расхождение между витринами СУБД.** "
+                       "Причина: в PostgreSQL обновились данные или изменился период, но витрина еще не была перенесена в ClickHouse. "
+                       "Нажмите кнопку **«🔄 Синхронизировать с ClickHouse»** выше, чтобы актуализировать данные.")
 
     except Exception as e:
         st.error(f"Ошибка проверки витрин: {e}")

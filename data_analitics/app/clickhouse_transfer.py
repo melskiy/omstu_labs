@@ -130,6 +130,12 @@ def transfer_mart_to_clickhouse(p_sdt: date = None, p_edt: date = None) -> int:
 
     ch_client = get_ch_client()
     
+    # Очистка целевой таблицы перед вставкой для исключения расхождений со старыми данными
+    if not p_sdt and not p_edt:
+        ch_client.command(f"TRUNCATE TABLE {CH_DB}.city_genre_popularity")
+    else:
+        ch_client.command(f"ALTER TABLE {CH_DB}.city_genre_popularity DELETE WHERE dt BETWEEN '{p_sdt}' AND '{p_edt}'")
+
     # Вставка данных пакетом
     ch_client.insert(
         table='city_genre_popularity',
