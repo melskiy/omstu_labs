@@ -1,0 +1,9 @@
+psycopg2-binary>=2.9.9
+clickhouse-connect>=0.7.16
+pandas>=2.2.0
+numpy>=1.26.0
+streamlit>=1.38.0
+plotly>=5.24.0
+faker>=28.0.0
+python-dotenv>=1.0.1
+sqlalchemy>=2.0.30
