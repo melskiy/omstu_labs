@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Голосовой бот АДС — Аналитика</title>
+<style>
+  /* ── Сброс и базовые стили ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; }
+
+  /* ── Шапка ── */
+  header {
+    background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+    color: #fff; padding: 20px 32px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  header .logo { font-size: 2rem; }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header p  { font-size: 0.85rem; opacity: .8; margin-top: 2px; }
+
+  /* ── Навигация ── */
+  nav {
+    background: #2d3748; display: flex; gap: 2px;
+    padding: 0 16px; overflow-x: auto;
+  }
+  nav button {
+    background: none; border: none; color: #a0aec0;
+    padding: 12px 20px; cursor: pointer; font-size: 0.9rem;
+    border-bottom: 3px solid transparent; transition: .2s;
+    white-space: nowrap;
+  }
+  nav button:hover, nav button.active {
+    color: #fff; border-bottom-color: #63b3ed;
+  }
+
+  /* ── Контент ── */
+  main { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── Карточки дашборда ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: #fff; border-radius: 10px; padding: 20px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    border-left: 4px solid #63b3ed;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .card.red    { border-left-color: #fc8181; }
+  .card.green  { border-left-color: #68d391; }
+  .card.yellow { border-left-color: #f6e05e; }
+  .card.purple { border-left-color: #b794f4; }
+  .card span   { font-size: .78rem; color: #718096; }
+  .card strong { font-size: 2rem; font-weight: 800; }
+  .card em     { font-size: .85rem; color: #4a5568; }
+
+  /* ── Секции ── */
+  section { display: none; }
+  section.active { display: block; }
+  .section-title {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;
+    color: #1a365d; border-bottom: 2px solid #bee3f8; padding-bottom: 6px;
+  }
+
+  /* ── Таблицы ── */
+  .table-wrap { background:#fff; border-radius: 10px; overflow: auto; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  thead th {
+    background: #2b6cb0; color: #fff;
+    padding: 10px 14px; text-align: left; font-weight: 600;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(odd) { background: #f7fafc; }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; }
+
+  /* ── Фильтр ── */
+  .filter-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .filter-row label { font-size: .9rem; font-weight: 600; }
+  .filter-row select, .filter-row input {
+    padding: 7px 12px; border: 1px solid #cbd5e0;
+    border-radius: 6px; font-size: .88rem; background: #fff;
+  }
+  .btn {
+    padding: 7px 18px; background: #2b6cb0; color: #fff;
+    border: none; border-radius: 6px; cursor: pointer; font-size: .88rem;
+    transition: background .2s;
+  }
+  .btn:hover { background: #2c5282; }
+
+  /* ── Бейджи статуса ── */
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-size: .78rem; font-weight: 600;
+  }
+  .badge-green  { background: #c6f6d5; color: #22543d; }
+  .badge-blue   { background: #bee3f8; color: #1a365d; }
+  .badge-yellow { background: #fefcbf; color: #744210; }
+  .badge-gray   { background: #e2e8f0; color: #4a5568; }
+  .badge-red    { background: #fed7d7; color: #742a2a; }
+
+  /* ── Графики (SVG-бар) ── */
+  .chart-container { background:#fff; border-radius:10px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:16px; }
+  .bar-wrap { display:flex; flex-direction:column; gap:10px; }
+  .bar-row { display:flex; align-items:center; gap:10px; font-size:.85rem; }
+  .bar-label { width:220px; text-align:right; color:#4a5568; flex-shrink:0; }
+  .bar-track { flex:1; background:#e2e8f0; border-radius:4px; height:22px; }
+  .bar-fill  { height:22px; border-radius:4px; background:#63b3ed; display:flex; align-items:center; padding-left:6px; color:#fff; font-size:.78rem; font-weight:600; min-width:30px; transition:width .6s ease; }
+  .bar-fill.red { background:#fc8181; }
+
+  /* ── Лоадер ── */
+  .loader { text-align:center; padding:40px; color:#718096; font-size:1rem; }
+
+  footer { text-align:center; padding:20px; color:#a0aec0; font-size:.8rem; margin-top:16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🚨</div>
+  <div>
+    <h1>Голосовой бот аварийно-диспетчерской службы</h1>
+    <p>Аналитическое приложение &bull; PostgreSQL + FastAPI &bull; Малицкий А.С., ФИТм-251</p>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('dashboard',this)">📊 Дашборд</button>
+  <button onclick="showTab('incidents',this)">🏚️ Инциденты</button>
+  <button onclick="showTab('calls',this)">📞 Звонки</button>
+  <button onclick="showTab('bytype',this)">📈 По типам</button>
+  <button onclick="showTab('operators',this)">👷 Операторы</button>
+</nav>
+
+<main>
+
+  <!-- ── Дашборд ── -->
+  <section id="dashboard" class="active">
+    <div class="section-title">Общая статистика</div>
+    <div class="cards" id="dashboard-cards">
+      <div class="loader">Загрузка...</div>
+    </div>
+
+    <div class="chart-container">
+      <div class="section-title">Звонки по типам инцидентов</div>
+      <div class="bar-wrap" id="type-chart"><div class="loader">Загрузка...</div></div>
+    </div>
+
+    <div class="chart-container">
+      <div class="section-title">Бот vs Оператор — среднее время обработки</div>
+      <div class="bar-wrap" id="handling-chart"><div class="loader">Загрузка...</div></div>
+    </div>
+  </section>
+
+  <!-- ── Инциденты ── -->
+  <section id="incidents">
+    <div class="section-title">Инциденты</div>
+    <div class="filter-row">
+      <label>Статус:</label>
+      <select id="status-filter">
+        <option value="">Все</option>
+        <option>Принят</option>
+        <option>В работе</option>
+        <option>Выполнен</option>
+        <option>Отменён</option>
+        <option>Дублирующий</option>
+      </select>
+      <button class="btn" onclick="loadIncidents()">Применить</button>
+    </div>
+    <div class="table-wrap" id="incidents-table"><div class="loader">Загрузка...</div></div>
+  </section>
+
+  <!-- ── Звонки ── -->
+  <section id="calls">
+    <div class="section-title">Журнал звонков</div>
+    <div class="table-wrap" id="calls-table"><div class="loader">Загрузка...</div></div>
+  </section>
+
+  <!-- ── По типам ── -->
+  <section id="bytype">
+    <div class="section-title">Статистика звонков по типам инцидентов</div>
+    <div class="table-wrap" id="bytype-table"><div class="loader">Загрузка...</div></div>
+  </section>
+
+  <!-- ── Операторы ── -->
+  <section id="operators">
+    <div class="section-title">Операторы / Диспетчеры</div>
+    <div class="table-wrap" id="operators-table"><div class="loader">Загрузка...</div></div>
+  </section>
+
+</main>
+
+<footer>Аварийно-диспетчерская служба &bull; Аналитическое приложение v1.0</footer>
+
+<script>
+// ─── Навигация ─────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'incidents') loadIncidents();
+  if (id === 'calls')     loadCalls();
+  if (id === 'bytype')    loadByType();
+  if (id === 'operators') loadOperators();
+}
+
+// ─── Утилиты ───────────────────────────────────────────────────────────────
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.statusText);
+  return r.json();
+}
+
+function statusBadge(s) {
+  const map = {
+    'Принят':     'badge-yellow',
+    'В работе':   'badge-blue',
+    'Выполнен':   'badge-green',
+    'Отменён':    'badge-gray',
+    'Дублирующий':'badge-red'
+  };
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+}
+
+function makeTable(rows) {
+  if (!rows || !rows.length) return '<div class="loader">Нет данных</div>';
+  const headers = Object.keys(rows[0]);
+  const ths = headers.map(h => `<th>${h}</th>`).join('');
+  const trs = rows.map(row => {
+    const tds = headers.map(h => {
+      let v = row[h];
+      if (v === null || v === undefined) v = '—';
+      if (h === 'Статус') return `<td>${statusBadge(v)}</td>`;
+      if (h === 'Активен') return `<td>${v ? '✅' : '❌'}</td>`;
+      if (typeof v === 'boolean') return `<td>${v ? 'Да' : 'Нет'}</td>`;
+      return `<td>${v}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+// ─── Дашборд ───────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const d = await fetchJSON('/api/dashboard');
+    document.getElementById('dashboard-cards').innerHTML = `
+      <div class="card"><span>Всего звонков</span><strong>${d['Всего звонков']||0}</strong></div>
+      <div class="card red"><span>Всего инцидентов</span><strong>${d['Всего инцидентов']||0}</strong></div>
+      <div class="card yellow"><span>Открытых инцидентов</span><strong>${d['Открытых инцидентов']||0}</strong></div>
+      <div class="card green"><span>Закрытых инцидентов</span><strong>${d['Закрытых инцидентов']||0}</strong></div>
+      <div class="card purple"><span>Доля бота</span><strong>${d['Доля бота (%)']}%</strong></div>
+      <div class="card"><span>Ср. время звонка</span><strong style="font-size:1.3rem">${d['Среднее время звонка (сек)']} с</strong></div>
+    `;
+  } catch(e) {
+    document.getElementById('dashboard-cards').innerHTML = `<div class="loader">⚠ Ошибка загрузки: ${e.message}</div>`;
+  }
+
+  // График по типам
+  try {
+    const rows = await fetchJSON('/api/calls-by-type');
+    const max = Math.max(...rows.map(r => r['Количество звонков']));
+    document.getElementById('type-chart').innerHTML = rows.map(r => {
+      const w = Math.round((r['Количество звонков'] / max) * 100);
+      const cls = r['Приоритет'] === 1 ? 'red' : '';
+      return `<div class="bar-row">
+        <div class="bar-label">${r['Тип инцидента']}</div>
+        <div class="bar-track"><div class="bar-fill ${cls}" style="width:${w}%">${r['Количество звонков']}</div></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('type-chart').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+
+  // График: бот vs оператор
+  try {
+    const rows = await fetchJSON('/api/avg-handling');
+    const max = Math.max(...rows.map(r => r['Среднее время (сек)']));
+    document.getElementById('handling-chart').innerHTML = rows.map(r => {
+      const w = Math.round((r['Среднее время (сек)'] / max) * 100);
+      return `<div class="bar-row">
+        <div class="bar-label">${r['Обработчик']} (${r['Количество']} зв.)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${w}%">${r['Среднее время (сек)']} с</div></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('handling-chart').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── Инциденты ─────────────────────────────────────────────────────────────
+async function loadIncidents() {
+  const status = document.getElementById('status-filter').value;
+  const url = status ? `/api/incidents?status=${encodeURIComponent(status)}` : '/api/incidents';
+  document.getElementById('incidents-table').innerHTML = '<div class="loader">Загрузка...</div>';
+  try {
+    const rows = await fetchJSON(url);
+    document.getElementById('incidents-table').innerHTML = makeTable(rows);
+  } catch(e) {
+    document.getElementById('incidents-table').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── Звонки ────────────────────────────────────────────────────────────────
+async function loadCalls() {
+  document.getElementById('calls-table').innerHTML = '<div class="loader">Загрузка...</div>';
+  try {
+    const rows = await fetchJSON('/api/calls');
+    document.getElementById('calls-table').innerHTML = makeTable(rows);
+  } catch(e) {
+    document.getElementById('calls-table').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── По типам ──────────────────────────────────────────────────────────────
+async function loadByType() {
+  document.getElementById('bytype-table').innerHTML = '<div class="loader">Загрузка...</div>';
+  try {
+    const rows = await fetchJSON('/api/calls-by-type');
+    document.getElementById('bytype-table').innerHTML = makeTable(rows);
+  } catch(e) {
+    document.getElementById('bytype-table').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── Операторы ─────────────────────────────────────────────────────────────
+async function loadOperators() {
+  document.getElementById('operators-table').innerHTML = '<div class="loader">Загрузка...</div>';
+  try {
+    const rows = await fetchJSON('/api/operators/stats');
+    document.getElementById('operators-table').innerHTML = makeTable(rows);
+  } catch(e) {
+    document.getElementById('operators-table').innerHTML = `<div class="loader">⚠ ${e.message}</div>`;
+  }
+}
+
+// ─── Инициализация ─────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
